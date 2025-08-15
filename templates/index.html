@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .chat-container {
+          width: 700px; /* Increased width */
+          max-width: 90%; /* For responsiveness */
+          background: #fff;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          border-radius: 10px;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+      }
+        .chat-header {
+            background: #4a90e2;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 18px;
+        }
+        .chat-box {
+          flex: 1;
+          padding: 15px;
+          overflow-y: auto;        /* vertical scroll */
+          max-height: 500px;       /* adjust to desired size */
+          min-height: 200px;       /* ensures box isn't too small */
+          scrollbar-width: thin;   /* Firefox - thin scrollbar */
+          scrollbar-color: #4a90e2 #f5f6fa; /* scrollbar color */
+        }
+      
+        /* Optional: Custom scrollbar for WebKit browsers */
+        .chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-box::-webkit-scrollbar-thumb {
+            background: #4a90e2;
+            border-radius: 3px;
+        }
+        .chat-box::-webkit-scrollbar-track {
+            background: #f5f6fa;
+        }
+      
+        .message {
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        .user-message {
+            background: #4a90e2;
+            color: white;
+            align-self: flex-end;
+            white-space: pre-wrap;
+        }
+        .bot-message {
+          background: #e1e1e1;
+          color: black;
+          align-self: flex-start;
+          white-space: pre-wrap;
+          line-height: 1.5; /* More readable */
+          font-size: 15px;
+        }
+        .chat-input {
+            display: flex;
+            border-top: 1px solid #ccc;
+        }
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            outline: none;
+            height: 50px
+        }
+        .chat-input button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        .chat-input button:hover {
+            background: #357abd;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">AI Chatbot</div>
+        <div class="chat-box" id="chatBox"></div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message..." />
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+
+      // Display a default welcome message when page loads
+        window.onload = function() {
+          const chatBox = document.getElementById("chatBox");
+          const botMsgDiv = document.createElement("div");
+          botMsgDiv.classList.add("message", "bot-message");
+          botMsgDiv.innerHTML = "👋 Hello! How can I help you today?";
+          chatBox.appendChild(botMsgDiv);
+        };
+        async function sendMessage() {
+            const input = document.getElementById("userInput");
+            const chatBox = document.getElementById("chatBox");
+            const userMessage = input.value.trim();
+            if (!userMessage) return;
+
+            // Display user message
+            const userMsgDiv = document.createElement("div");
+            userMsgDiv.classList.add("message", "user-message");
+            userMsgDiv.textContent = userMessage;
+            chatBox.appendChild(userMsgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            input.value = "";
+
+            // Send to backend
+            try {
+                const res = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: userMessage })
+                });
+                const data = await res.json();
+
+                // Format bot message: replace **bold** with <strong> and newlines with <br>
+                let formattedReply = (data.reply || "No response")
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                    .replace(/\n/g, "<br>");
+
+                // Display bot message
+                const botMsgDiv = document.createElement("div");
+                botMsgDiv.classList.add("message", "bot-message");
+                botMsgDiv.innerHTML = formattedReply; // allow HTML formatting
+                chatBox.appendChild(botMsgDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+            } catch (err) {
+                console.error("Error:", err);
+            }
+        }
+    </script>
+</body>
+</html>
